@@ -73,9 +73,9 @@ function operate(a, b, operator) {
         return add(a, b);
     } else if (operator === '-') {
         return subtract(a, b);
-    } else if (operator === 'x') {
+    } else if (operator === 'x' || operator === "*") {
         return multiply(a, b);
-    } else if (operator === '÷') {
+    } else if (operator === '÷' || operator === '/') {
         return divide(a, b);
     } else if (operator === '%') {
         return modulo(a, b);
@@ -100,12 +100,24 @@ function updateTopNum(e) {
     displayTop.innerHTML += e.target.textContent;
 }
 
+function updateTopNumKey(e) {
+  displayTop.innerHTML += e.key;
+}
+
 function updateTopOp(e) {
     displayTop.innerHTML += ` ${e.target.textContent} `;
 }
 
+function updateTopOpKey(e) {
+  displayTop.innerHTML += ` ${e.key} `;
+}
+
 function contNum(e) {
     displayCont.innerHTML += e.target.textContent;
+}
+
+function contNumKey(e) {
+  displayCont.innerHTML += e.key;
 }
 
 // Variables and References
@@ -118,39 +130,86 @@ const clearBut = document.querySelector('.clear');
 let step = 0;
 let expr = [];
 let holder;
+const ops = ['+', '-', '*', 'x', '÷', '/', '%'];
+
+function numSelect(e) {
+  step === 0 ? contNum(e) : displayCont.innerHTML = e.target.textContent;
+  updateTopNum(e);
+  step = 0;
+}
+
+function opSelect(e) {
+  if (step === 2) {
+    displayTop.innerHTML = expr[0];
+    expr.push(e.target.textContent);
+}   else {
+    expr.push(parseFloat(displayCont.innerHTML));
+    expr.push(e.target.textContent);
+    console.log(expr);
+}
+  updateTopOp(e);
+  step = 1;
+}
+
+function eqSelect() {
+  expr.push(parseFloat(displayCont.innerHTML));
+  expr.length === 3 ? holder = operate(expr[0], expr[2], expr[1]) : holder = multOpers(expr);
+  displayCont.innerHTML = holder;
+  resetArray(expr);
+  step = 2;
+}
 
 calcNums.forEach((button) => {
-    button.addEventListener('click', (e) => {
-        step === 0 ? contNum(e) : displayCont.innerHTML = e.target.textContent;
-        updateTopNum(e);
-        step = 0;
-    });
+    button.addEventListener('click', numSelect);
 });
 
 calcOps.forEach((button) => {
-    button.addEventListener('click', (e) => {
-        if (step === 2) {
-            displayTop.innerHTML = expr[0];
-            expr.push(e.target.textContent);
-        }   else {
-            expr.push(parseFloat(displayCont.innerHTML));
-            expr.push(e.target.textContent);
-        }
-        updateTopOp(e);
-        console.log(expr);
-        step = 1;
-    })
+    button.addEventListener('click', opSelect);
 });
 
-equalsBut.addEventListener('click', function () {
-    expr.push(parseFloat(displayCont.innerHTML));
-    expr.length === 3 ? holder = operate(expr[0], expr[2], expr[1]) : holder = multOpers(expr);
-    displayCont.innerHTML = holder;
-    resetArray(expr);
-    step = 2;
-});
+equalsBut.addEventListener('click', eqSelect);
 
 clearBut.addEventListener('click', function () {
     window.location.reload();
 })
 
+
+// Keyboard Input Functionality
+const keyBoard = document.querySelector('body')
+
+function handleKeyNum(e) {
+  step === 0 ? contNumKey(e) : displayCont.innerHTML = e.key;
+  updateTopNumKey(e);
+  step = 0;
+}
+
+function handleKeyOps(e) {
+  if (step === 2) {
+    displayTop.innerHTML = expr[0];
+    expr.push(e.key);
+}   else {
+    expr.push(parseFloat(displayCont.innerHTML));
+    expr.push(e.key);
+}
+  updateTopOpKey(e);
+  console.log(expr);
+  step = 1;
+}
+
+const handleKeyPress = function(e) {
+  if ((!isNaN(parseFloat(e.key)))) {
+    handleKeyNum(e);
+  }
+    else if (ops.includes(e.key)) {
+      handleKeyOps(e);
+    }
+    else if (e.key === '=' || e.key === 'Enter') {
+      expr.push(parseFloat(displayCont.innerHTML));
+      expr.length === 3 ? holder = operate(expr[0], expr[2], expr[1]) : holder = multOpers(expr);
+      displayCont.innerHTML = holder;
+      resetArray(expr);
+      step = 2;
+    }
+};
+
+keyBoard.addEventListener('keypress', handleKeyPress, false)
